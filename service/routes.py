@@ -57,17 +57,18 @@ def create_accounts():
         jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
     )
 
+
 ######################################################################
 # LIST ALL ACCOUNTS
 ######################################################################
-@app.route("/accounts", method=["GET"])
+@app.route("/accounts", methods=["GET"])
 def list_accounts():
     """
     Lists all the Accounts
     This endpoint will list all the accounts.   
     Returns:
         The accounts as a list of dict and HTTP_200_OK.
-        If no account is found, the lisst is empty and status is also 200_OK.
+        If no account is found, the list is empty and status is also 200_OK.
     """
     app.logger.info("Request to list Accounts")
 
