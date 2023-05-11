@@ -95,6 +95,8 @@ class Account(db.Model, PersistentBase):
     date_joined = db.Column(db.Date(), nullable=False, default=date.today())
 
     def __repr__(self):
+        """Returns useful information about the currrent class.
+           FYI - When you create a class, you should at least implement this method."""
         return f"<Account {self.name} id=[{self.id}]>"
 
     def serialize(self):
