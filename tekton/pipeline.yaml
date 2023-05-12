@@ -112,3 +112,35 @@ spec:
         - tests
         - lint
 
+    - name: deploy
+      # TASK - deploy
+      # OpenShift is a Kubernetes distribution from Red Hat which provides
+      #  oc, the OpenShift CLI that complements kubectl for simplifying 
+      #  deployment and configuration applications on OpenShift.
+      #  Openshift-client runs commands against the cluster provided by
+      #  the user via optional workspace and if not provided then it will
+      #  take the cluster on which the Task is running.
+      # From Tekton Hub / openshift-client
+      #  Workspaces
+      #   - manifest-dir: The workspace which contains kubernetes manifests
+      #                   which we want to apply on the cluster.
+      # Parameters
+      #   - SCRIPT: script of oc commands to execute e.g.: oc get pod $1 -0 yaml
+      #             This will take the first value of ARGS as pod name
+      workspaces:
+        - name: manifest-dir
+          workspace: pipeline-workspace          
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      params:
+      - name: SCRIPT
+        value: |
+          echo "Updating manifest..."
+          sed -i "s|IMAGE_NAME_HERE|$(params.build-image)|g" deploy/deployment.yaml
+          cat deploy/deployment.yaml
+          echo "Deploying to OpenShift..."
+          oc apply -f deploy/
+          oc get pods -l app=accounts
+      runAfter:
+        - build
