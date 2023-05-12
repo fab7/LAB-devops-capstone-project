@@ -65,7 +65,7 @@ def create_accounts():
 def list_accounts():
     """
     Lists all the Accounts
-    This endpoint will list all the accounts.   
+    This endpoint will list all the accounts.
     Returns:
         The accounts as a list of dict and HTTP_200_OK.
         If no account is found, the list is empty and status is also 200_OK.
@@ -109,8 +109,8 @@ def update_accounts(account_id):
     This endpoint will update an Account based on the posted data.
     Returns:
         The updated account as a dictionnary and the status 200_OK if the
-         account was found and succesfully updated. 
-        Returns 404_NOT_FOUND if the account cannot be found. 
+         account was found and succesfully updated.
+        Returns 404_NOT_FOUND if the account cannot be found.
     """
     app.logger.info("Request to update an Account with id: %s", account_id)
 
@@ -132,7 +132,7 @@ def delete_accounts(account_id):
     """
     Delete an Account
     This endpoint will delete an Account based on the account_id that is requested
-    
+
     Returns:
         If the account is found, it will return an empty body "", and alwyas a
         return code of 204_NO_CONTENT to indicate that the account no longer exist
