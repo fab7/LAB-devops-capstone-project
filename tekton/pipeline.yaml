@@ -15,7 +15,7 @@ spec:
     - name: repo-url
     - name: branch
       default: main
-      
+
   tasks:
 
     - name: init
@@ -39,16 +39,16 @@ spec:
       runAfter:
         - init
 
-    # TASK - lint
-    #  This task provides linting for Python.
-    #  From Tekton Hub / flake8
-    #   Workspaces
-    #   - source: A Workspace volume containing the python code
-    #   Parameters
-    #   - args: The arguments to be passed to the flake8 CLI. (Default: [""])
-    #   - path: The path to the module which should be analysed by flake8. (Default: ".")
-    #   - requirements_file: The path to the requirements file to pip install for your application to be checked. (Default: "requirements.txt")
     - name: lint
+      # TASK - lint
+      #  This task provides linting for Python.
+      #  From Tekton Hub / flake8
+      #   Workspaces
+      #   - source: A Workspace volume containing the python code
+      #   Parameters
+      #   - args: The arguments to be passed to the flake8 CLI. (Default: [""])
+      #   - path: The path to the module which should be analysed by flake8. (Default: ".")
+      #   - requirements_file: The path to the requirements file to pip install for your application to be checked. (Default: "requirements.txt")
       workspaces:
         - name: source
           workspace: pipeline-workspace          
@@ -59,5 +59,28 @@ spec:
         value: "python:3.9-slim"
       - name: args
         value: ["--count","--max-complexity=10","--max-line-length=127","--statistics"]
+      runAfter:
+        - clone
+
+    - name: tests
+      # TASK - tests
+      #  This task runs nosetests for Python.
+      #  From Tekton Hub / flake8
+      #   Workspaces
+      #   - source: A Workspace volume containing the python code
+      #   Parameters
+      #   - args: The arguments to be passed to the flake8 CLI. (Default: [""])
+      #   - path: The path to the module which should be analysed by flake8. (Default: ".")
+      #   - requirements_file: The path to the requirements file to pip install for your application to be checked. (Default: "requirements.txt")
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace          
+      taskRef:
+        name: nose
+      params:
+      - name: database_uri
+        value: "sqlite:///test.db"
+      - name: args
+        value: "-v --with-spec --spec-color"
       runAfter:
         - clone
