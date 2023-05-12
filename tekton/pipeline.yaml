@@ -15,7 +15,10 @@ spec:
     - name: repo-url
     - name: branch
       default: main
+    - name: build-image
+
   tasks:
+
     - name: init
       workspaces:
         - name: source
@@ -36,3 +39,108 @@ spec:
         value: $(params.branch)
       runAfter:
         - init
+
+    - name: lint
+      # TASK - lint
+      #  This task provides linting for Python.
+      #  From Tekton Hub / flake8
+      #   Workspaces
+      #   - source: A Workspace volume containing the python code
+      #   Parameters
+      #   - args: The arguments to be passed to the flake8 CLI. (Default: [""])
+      #   - path: The path to the module which should be analysed by flake8. (Default: ".")
+      #   - requirements_file: The path to the requirements file to pip install for your application to be checked. (Default: "requirements.txt")
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace          
+      taskRef:
+        name: flake8
+      params:
+      - name: image
+        value: "python:3.9-slim"
+      - name: args
+        value: ["--count","--max-complexity=10","--max-line-length=127","--statistics"]
+      runAfter:
+        - clone
+
+    - name: tests
+      # TASK - tests
+      #  This task runs nosetests for Python.
+      #  From Tekton Hub / flake8
+      #   Workspaces
+      #   - source: A Workspace volume containing the python code
+      #   Parameters
+      #   - args: The arguments to be passed to the flake8 CLI. (Default: [""])
+      #   - path: The path to the module which should be analysed by flake8. (Default: ".")
+      #   - requirements_file: The path to the requirements file to pip install for your application to be checked. (Default: "requirements.txt")
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace          
+      taskRef:
+        name: nose
+      params:
+      - name: database_uri
+        value: "sqlite:///test.db"
+      - name: args
+        value: "-v --with-spec --spec-color"
+      runAfter:
+        - clone
+
+    - name: build
+      # TASK - build
+      # This Task builds source into a container image using Project
+      #  Atomic's Buildah build tool. It uses Buildah's support for 
+      #  building from Dockerfiles, using its buildah bud command. 
+      #  This command executes the directives in the Dockerfile to 
+      #  assemble a container image, then pushes that image to a 
+      #  container registry.
+      # From Tekton Hub / buildah
+      #   Workspaces
+      #   - source: A Workspace containing the source to build.
+      # Parameters
+      #   - IMAGE: The name (reference) of the image to build.
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace          
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      params:
+      - name: IMAGE
+        value: "$(params.build-image)"
+      runAfter:
+        - tests
+        - lint
+
+    - name: deploy
+      # TASK - deploy
+      # OpenShift is a Kubernetes distribution from Red Hat which provides
+      #  oc, the OpenShift CLI that complements kubectl for simplifying 
+      #  deployment and configuration applications on OpenShift.
+      #  Openshift-client runs commands against the cluster provided by
+      #  the user via optional workspace and if not provided then it will
+      #  take the cluster on which the Task is running.
+      # From Tekton Hub / openshift-client
+      #  Workspaces
+      #   - manifest-dir: The workspace which contains kubernetes manifests
+      #                   which we want to apply on the cluster.
+      # Parameters
+      #   - SCRIPT: script of oc commands to execute e.g.: oc get pod $1 -0 yaml
+      #             This will take the first value of ARGS as pod name
+      workspaces:
+        - name: manifest-dir
+          workspace: pipeline-workspace          
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      params:
+      - name: SCRIPT
+        value: |
+          echo "Updating manifest..."
+          sed -i "s|IMAGE_NAME_HERE|$(params.build-image)|g" deploy/deployment.yaml
+          cat deploy/deployment.yaml
+          echo "Deploying to OpenShift..."
+          oc apply -f deploy/
+          oc get pods -l app=accounts
+      runAfter:
+        - build
