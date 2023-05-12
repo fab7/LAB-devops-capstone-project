@@ -1,3 +1,10 @@
+#
+# 
+# Background: Remember that a step is contained within a task, and
+#   that a task runs on a pod. Every step executes in a new container
+#   in that pod. So, the next thing you need to define is what image
+#   to use to create that container. 
+#
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Task
